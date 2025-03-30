@@ -1,5 +1,6 @@
 """Module for fetching and processing data from Civitai API and storing in Qdrant"""
 import os
+import sys
 import json
 import requests
 import streamlit as st
@@ -8,11 +9,16 @@ from typing import List, Dict, Optional, Any
 from datetime import datetime
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
-from agno.embedder.fastembed import FastEmbedEmbedder
 import numpy as np
 import logging
 import time
 from dotenv import load_dotenv
+
+# Add project root to Python path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, project_root)
+
+from modules.utils.embedder import LocalFastEmbedder
 
 # Set up logging
 logging.basicConfig(
@@ -55,13 +61,13 @@ class CivitaiDataFetcher:
         
         self.api_key = secrets["CIVITAI_API_KEY"]
         self.base_url = "https://civitai.com/api/v1/images"
-        self.embedder = FastEmbedEmbedder()
+        self.embedder = LocalFastEmbedder()
         self.qdrant_client = QdrantClient(
             url=secrets["QDRANT_URL"],
             api_key=secrets["QDRANT_API_KEY"]
         )
         self.collection_name = secrets["COLLECTION_NAME"]
-        self.temp_file = "modules/utils/tempfile.json"
+        self.temp_file = os.path.join(os.path.dirname(__file__), "tempfile.json")
         logger.info(f"Initialized with collection: {self.collection_name}")
         
         # Initialize temp file if it doesn't exist
@@ -164,7 +170,7 @@ class CivitaiDataFetcher:
                 'url': item.get('url', ''),
                 'prompt': prompt,
                 'negative_prompt': meta.get('negativePrompt', ''),
-                'model_name': base_model,
+                'baseModel': base_model,
                 'created_at': item.get('createdAt', ''),
                 'meta': {
                     'seed': meta.get('seed'),
