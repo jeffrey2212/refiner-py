@@ -1,6 +1,8 @@
 streamlit
-agno
+agn
 fastembed
 qdrant-client
 ollama
 pydantic
+python-dotenv
+numpy<2
